@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Clock In/Out</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+        }
+        .login-container {
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        .clock-container {
+            display: none;
+            text-align: center;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        input, button {
+            padding: 10px;
+            margin: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/@auth0/auth0-spa-js/1.17.0/auth0-spa-js.min.js"></script>
+</head>
+<body>
+    <div class="login-container">
+        <h2>Employee Clock In/Out</h2>
+        <form id="login-form">
+            <input type="email" id="email" placeholder="Enter your email">
+            <input type="password" id="password" placeholder="Enter your password">
+            <button type="submit">Login</button>
+        </form>
+    </div>
+
+    <div id="clock-screen" class="clock-container">
+        <h2>Employee Clock In/Out</h2>
+        <h3>Welcome, <span id="employee-name"></span></h3>
+        <button id="clock-button" onclick="toggleClock()">Clock In</button>
+    </div>
+
+    <script>
+        async function initAuth0() {
+            const auth0Client = await createAuth0Client({
+                domain: 'dev-fftu8t4rwjif7mjl.us.auth0.com',
+                client_id: 'COJAL4VLT05oNjY0q43XAwfPz2J6w8W4',
+                redirect_uri: window.location.origin
+            });
+            return auth0Client;
+        }
+
+        async function loginWithEmailPassword(email, password) {
+            const auth0Client = await initAuth0();
+            try {
+                await auth0Client.loginWithUsernameAndPassword({
+                    username: email,
+                    password: password,
+                    realm: 'Username-Password-Authentication'
+                });
+                // Redirect to clock-in/clock-out interface or update UI accordingly
+                document.getElementById('login-form').style.display = 'none';
+                document.getElementById('clock-screen').style.display = 'block';
+            } catch (error) {
+                console.error('Login failed:', error);
+                alert('Login failed. Please check your email and password.');
+            }
+        }
+
+        async function toggleClock() {
+            const button = document.getElementById('clock-button');
+            if (button.textContent === 'Clock In') {
+                // Clock In
+                const clockInTime = new Date();
+                button.textContent = 'Clock Out';
+                alert('Clocked in at ' + clockInTime.toLocaleTimeString());
+            } else {
+                // Clock Out
+                const clockOutTime = new Date();
+                button.textContent = 'Clock In';
+                const hoursWorked = (clockOutTime - clockInTime) / 1000 / 60 / 60;
+                alert('Clocked out at ' + clockOutTime.toLocaleTimeString() + '. Total hours worked: ' + hoursWorked.toFixed(2));
+                // Record data or perform any other action
+            }
+        }
+        
+        document.getElementById('login-form').addEventListener('submit', function(event) {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            loginWithEmailPassword(email, password);
+        });
+    </script>
+</body>
+</html>
