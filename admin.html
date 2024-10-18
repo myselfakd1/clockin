@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+        .admin-section {
+            margin-bottom: 30px;
+        }
+        label {
+            display: block;
+            margin-top: 10px;
+        }
+        input, button {
+            padding: 10px;
+            margin-top: 10px;
+            width: 100%;
+            max-width: 300px;
+        }
+        button {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #218838;
+        }
+    </style>
+</head>
+<body>
+    <h1>Admin Panel</h1>
+    
+    <!-- Add Product Section -->
+    <div class="admin-section">
+        <h2>Add a Product</h2>
+        <label for="productName">Product Name</label>
+        <input type="text" id="productName">
+        
+        <label for="productPrice">Product Price (in credits)</label>
+        <input type="number" id="productPrice">
+        
+        <label for="productImage">Product Image URL</label>
+        <input type="text" id="productImage">
+        
+        <button onclick="addProduct()">Add Product</button>
+    </div>
+
+    <!-- Adjust User Balance Section -->
+    <div class="admin-section">
+        <h2>Adjust User Balance</h2>
+        <label for="userEmail">User Email</label>
+        <input type="email" id="userEmail">
+        
+        <label for="balanceAdjustment">Balance Adjustment (+/- credits)</label>
+        <input type="number" id="balanceAdjustment">
+        
+        <button onclick="adjustUserBalance()">Adjust Balance</button>
+    </div>
+
+    <button onclick="logout()">Logout</button>
+
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+    
+    <script>
+        // Firebase configuration
+        const firebaseConfig = {
+          apiKey: "AIzaSyAku6S4qaDYn70Ffv61TeAcp9pXwMJmh24",
+          authDomain: "ab-online-store.firebaseapp.com",
+          databaseURL: "https://ab-online-store-default-rtdb.firebaseio.com",
+          projectId: "ab-online-store",
+          storageBucket: "ab-online-store.appspot.com",
+          messagingSenderId: "1036314860492",
+          appId: "1:1036314860492:web:ead49550b45d9d692b9b69",
+          measurementId: "G-NXK2Z4E419"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // Ensure only admin can access
+        auth.onAuthStateChanged(user => {
+          if (user) {
+            // Verify if the user is admin (based on Firestore data)
+            db.collection('users').doc(user.uid).get().then(doc => {
+              if (doc.exists && doc.data().role !== 'admin') {
+                alert("Access denied. You are not an admin.");
+                window.location.href = 'index.html';  // Redirect to home
+              }
+            });
+          } else {
+            window.location.href = 'index.html';  // Redirect to login if not logged in
+          }
+        });
+
+        // Add a product
+        function addProduct() {
+          const productName = document.getElementById('productName').value;
+          const productPrice = parseInt(document.getElementById('productPrice').value);
+          const productImage = document.getElementById('productImage').value;
+
+          db.collection('products').add({
+            name: productName,
+            price: productPrice,
+            imageUrl: productImage
+          }).then(() => {
+            alert('Product added successfully!');
+          }).catch(error => {
+            console.error('Error adding product: ', error);
+          });
+        }
+
+        // Adjust user balance
+        function adjustUserBalance() {
+          const userEmail = document.getElementById('userEmail').value;
+          const balanceAdjustment = parseInt(document.getElementById('balanceAdjustment').value);
+
+          // Find the user by email
+          db.collection('users').where('email', '==', userEmail).get().then(querySnapshot => {
+            if (!querySnapshot.empty) {
+              const userDoc = querySnapshot.docs[0];
+              const currentBalance = userDoc.data().currencyBalance || 0;
+              const newBalance = currentBalance + balanceAdjustment;
+
+              // Update the user's balance
+              db.collection('users').doc(userDoc.id).update({
+                currencyBalance: newBalance
+              }).then(() => {
+                alert('Balance adjusted successfully!');
+              }).catch(error => {
+                console.error('Error adjusting balance: ', error);
+              });
+            } else {
+              alert('User not found.');
+            }
+          });
+        }
+
+        // Logout function
+        function logout() {
+          auth.signOut().then(() => {
+            window.location.href = 'index.html';
+          });
+        }
+    </script>
+</body>
+</html>
