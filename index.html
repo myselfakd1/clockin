@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>My Reward Site</title>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.6.8/firebase-firestore.js"></script>
+</head>
+<body>
+  <!-- Signup Form -->
+  <h2>Sign Up</h2>
+  <input type="email" id="signupEmail" placeholder="Email">
+  <input type="password" id="signupPassword" placeholder="Password">
+  <button onclick="signUp()">Sign Up</button>
+
+  <!-- Login Form -->
+  <h2>Login</h2>
+  <input type="email" id="loginEmail" placeholder="Email">
+  <input type="password" id="loginPassword" placeholder="Password">
+  <button onclick="login()">Login</button>
+
+  <script>
+    // Firebase configuration
+    const firebaseConfig = {
+      apiKey: "AIzaSyAku6S4qaDYn70Ffv61TeAcp9pXwMJmh24",
+      authDomain: "ab-online-store.firebaseapp.com",
+      databaseURL: "https://ab-online-store-default-rtdb.firebaseio.com",
+      projectId: "ab-online-store",
+      storageBucket: "ab-online-store.appspot.com",
+      messagingSenderId: "1036314860492",
+      appId: "1:1036314860492:web:ead49550b45d9d692b9b69",
+      measurementId: "G-NXK2Z4E419"
+    };
+
+    // Initialize Firebase
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db = firebase.firestore();
+
+    // Sign Up Function
+    function signUp() {
+      const email = document.getElementById("signupEmail").value;
+      const password = document.getElementById("signupPassword").value;
+
+      auth.createUserWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          const user = userCredential.user;
+          // Send email verification
+          user.sendEmailVerification()
+            .then(() => {
+              alert("Verification email sent! Please check your inbox.");
+            })
+            .catch((error) => {
+              alert("Error sending email verification: " + error.message);
+            });
+
+          // Add user to Firestore with initial balance
+          db.collection("users").doc(user.uid).set({
+            email: email,
+            currencyBalance: 100 // Initial balance
+          });
+        })
+        .catch((error) => {
+          alert(error.message);
+        });
+    }
+
+    // Login Function
+    function login() {
+      const email = document.getElementById("loginEmail").value;
+      const password = document.getElementById("loginPassword").value;
+
+      auth.signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          if (userCredential.user.emailVerified) {
+            // Redirect to the store page after successful login
+            window.location.href = 'store.html'; 
+          } else {
+            alert("Please verify your email before logging in.");
+            auth.signOut(); // Optional: sign out the user if they are not verified
+          }
+        })
+        .catch((error) => {
+          alert(error.message);
+        });
+    }
+  </script>
+</body>
+</html>
